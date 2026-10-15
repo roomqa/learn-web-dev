@@ -3,24 +3,215 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Выбор даты и времени</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>MOSS Beauty Atelier — Выбор даты и времени</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <!--
-      ЗАДАНИЕ
-      ========
-      Сверстать страницу выбора даты и времени по своему макету.
+    <div class="app-wrapper">
+      <!-- Шапка и прогресс-бар -->
+      <header class="site-header">
+        <div class="header-top">
+          <a href="#" class="brand-logo">
+            <span class="brand-title">MOSS</span>
+            <span class="brand-subtitle">BEAUTY ATELIER</span>
+          </a>
 
-      Пока это только вёрстка. Никакого JavaScript — ни кликов,
-      ни переходов, ни выбора дня. Всё статично.
+          <nav class="main-nav">
+            <a href="#" class="nav-link">Услуги</a>
+            <a href="#" class="nav-link">Мастера</a>
+            <a href="#" class="nav-link">Контакты</a>
+          </nav>
 
-      Стили пишите в styles.css. Разметку — здесь.
-    -->
+          <button class="help-btn" type="button">Нужна помощь?</button>
+        </div>
 
-    <div class="page">
-      <!-- Начните отсюда. Разметьте шапку, основную область
-           с календарём и слотами, подвал. -->
+        <div class="progress-bar-container">
+          <div class="progress-info">
+            <span class="step-counter">ШАГ 4 ИЗ 6</span>
+            <span class="step-name">Дата и время</span>
+          </div>
+          <div class="progress-segments">
+            <div class="segment completed"></div>
+            <div class="segment completed"></div>
+            <div class="segment completed"></div>
+            <div class="segment active"></div>
+            <div class="segment"></div>
+            <div class="segment"></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Основной контент -->
+      <main class="booking-main">
+        <div class="booking-container">
+          <!-- Навигация назад и бейдж выбранной услуги -->
+          <div class="top-controls">
+            <a href="#" class="back-link">‹ Назад</a>
+            <div class="service-pill">Стрижка · 60 мин</div>
+          </div>
+
+          <!-- Заголовок страницы -->
+          <section class="page-heading">
+            <h1 class="main-title">Когда тебе удобно?</h1>
+            <p class="main-subtitle">
+              Выбери день в календаре и свободное время.
+            </p>
+          </section>
+
+          <!-- Сетка: Календарь + Слоты времени -->
+          <div class="booking-grid">
+            <!-- Карточка календаря -->
+            <section class="card calendar-card">
+              <div class="calendar-header">
+                <h2 class="card-title">Октябрь 2026</h2>
+                <div class="calendar-nav">
+                  <button class="cal-arrow" type="button" aria-label="Предыдущий месяц">‹</button>
+                  <button class="cal-arrow" type="button" aria-label="Следующий месяц">›</button>
+                </div>
+              </div>
+
+              <div class="weekdays-grid">
+                <span>ПН</span>
+                <span>ВТ</span>
+                <span>СР</span>
+                <span>ЧТ</span>
+                <span>ПТ</span>
+                <span>СБ</span>
+                <span>ВС</span>
+              </div>
+
+              <div class="days-grid">
+                <!-- Пустые ячейки начала месяца (четверг — 1 число) -->
+                <div class="day-cell empty"></div>
+                <div class="day-cell empty"></div>
+                <div class="day-cell empty"></div>
+                <button type="button" class="day-cell available">1</button>
+                <button type="button" class="day-cell available">2</button>
+                <button type="button" class="day-cell available">3</button>
+                <button type="button" class="day-cell available">4</button>
+
+                <button type="button" class="day-cell disabled" disabled>5</button>
+                <button type="button" class="day-cell available">6</button>
+                <button type="button" class="day-cell available">7</button>
+                <button type="button" class="day-cell available">8</button>
+                <button type="button" class="day-cell available">9</button>
+                <button type="button" class="day-cell available">10</button>
+                <button type="button" class="day-cell available">11</button>
+
+                <button type="button" class="day-cell disabled" disabled>12</button>
+                <button type="button" class="day-cell available">13</button>
+                <button type="button" class="day-cell available">14</button>
+                <button type="button" class="day-cell available">15</button>
+                <button type="button" class="day-cell available">16</button>
+                <button type="button" class="day-cell selected">17</button>
+                <button type="button" class="day-cell available">18</button>
+
+                <button type="button" class="day-cell available">19</button>
+                <button type="button" class="day-cell available">20</button>
+                <button type="button" class="day-cell available">21</button>
+                <button type="button" class="day-cell available">22</button>
+                <button type="button" class="day-cell available">23</button>
+                <button type="button" class="day-cell available">24</button>
+                <button type="button" class="day-cell available">25</button>
+
+                <button type="button" class="day-cell disabled" disabled>26</button>
+                <button type="button" class="day-cell available">27</button>
+                <button type="button" class="day-cell available">28</button>
+                <button type="button" class="day-cell available">29</button>
+                <button type="button" class="day-cell available">30</button>
+                <button type="button" class="day-cell available">31</button>
+              </div>
+
+              <div class="calendar-legend">
+                <div class="legend-item">
+                  <span class="dot-free"></span>
+                  <span>Свободно</span>
+                </div>
+                <div class="legend-item">
+                  <span class="badge-selected">17</span>
+                  <span>Выбранная дата</span>
+                </div>
+                <span class="legend-month">Октябрь 2026</span>
+              </div>
+            </section>
+
+            <!-- Карточка выбора времени -->
+            <section class="card slots-card">
+              <div class="slots-header">
+                <div class="slots-title-group">
+                  <h2 class="card-title">Суббота, 17 октября</h2>
+                  <span class="slots-subtitle">Свободное время</span>
+                </div>
+                <div class="slots-count-badge">9 слотов</div>
+              </div>
+
+              <div class="time-slots-grid">
+                <button type="button" class="time-slot">10:00</button>
+                <button type="button" class="time-slot">10:30</button>
+                <button type="button" class="time-slot">11:00</button>
+                <button type="button" class="time-slot">12:30</button>
+                <button type="button" class="time-slot">14:00</button>
+                <button type="button" class="time-slot selected">14:30</button>
+                <button type="button" class="time-slot">15:00</button>
+                <button type="button" class="time-slot">16:30</button>
+                <button type="button" class="time-slot">17:00</button>
+              </div>
+
+              <div class="selection-summary">
+                <span class="summary-label">Выбрано</span>
+                <strong class="summary-datetime">17 октября · 14:30</strong>
+                <span class="summary-master">Анна Волкова · 2 800 ₽</span>
+              </div>
+            </section>
+          </div>
+
+          <!-- Нижняя панель с кнопкой продолжения -->
+          <div class="booking-actions">
+            <span class="timezone-note">Все слоты указаны по московскому времени</span>
+            <button type="button" class="continue-btn">Продолжить →</button>
+          </div>
+        </div>
+      </main>
+
+      <!-- Подвал сайта -->
+      <footer class="site-footer">
+        <div class="footer-container">
+          <div class="footer-top">
+            <div class="footer-col brand-col">
+              <span class="footer-logo">MOSS</span>
+              <p class="footer-address">Москва, ул. Большая Никитская, 22</p>
+              <a href="tel:+74951202418" class="footer-phone">+7 (495) 120-24-18</a>
+            </div>
+
+            <div class="footer-col">
+              <span class="footer-heading">МЫ ОТКРЫТЫ</span>
+              <p class="footer-text">Ежедневно · 10:00–21:00</p>
+              <p class="footer-subtext">Запись по предварительной брони</p>
+            </div>
+
+            <div class="footer-col">
+              <span class="footer-heading">НАПИШИ НАМ</span>
+              <div class="social-links">
+                <a href="#">Telegram</a>
+                <span>·</span>
+                <a href="#">WhatsApp</a>
+              </div>
+              <a href="mailto:hello@moss.studio" class="footer-email">hello@moss.studio</a>
+            </div>
+          </div>
+
+          <div class="footer-bottom">
+            <span class="footer-copy">MOSS · beauty studio</span>
+            <span class="footer-hours-mini">Ежедневно · 10:00–21:00</span>
+          </div>
+        </div>
+      </footer>
     </div>
   </body>
 </html>
