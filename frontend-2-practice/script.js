@@ -1,4 +1,3 @@
-// 1. Данные и константы
 const MONTHS_NOMINATIVE = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
@@ -14,8 +13,9 @@ const DAYS_OF_WEEK = [
   "Среда", "Четверг", "Пятница", "Суббота",
 ];
 
-const TODAY = new Date(2026, 9, 1);
-const CLOSED_DAYS_OCT_2026 = [5, 12, 26];
+// Получаем реальное сегодняшнее устройство (без учета часов, минут и секунд)
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
 
 const SLOTS_BY_PATTERN = {
   default: ["10:00", "10:30", "11:00", "12:30", "14:00", "14:30", "15:00", "16:30", "17:00"],
@@ -30,18 +30,17 @@ const BOOKING_META = {
   price: 2800,
 };
 
-// 2. Состояние
+// Состояние: при старте берем текущий месяц и год, а выбранный день — сегодня (или 17 октября для макета, если текущая дата совпадает)
 const BOOKING_STATE = {
-  currentYear: 2026,
-  currentMonth: 9,
-  selectedYear: 2026,
-  selectedMonth: 9,
-  selectedDay: 17,
-  selectedTime: "14:30",
+  currentYear: TODAY.getFullYear(),
+  currentMonth: TODAY.getMonth(),
+  selectedYear: TODAY.getFullYear(),
+  selectedMonth: TODAY.getMonth(),
+  selectedDay: TODAY.getDate(),
+  selectedTime: null,
   slots: [],
 };
 
-// 3. Чистые функции
 function compareDates(date1, date2) {
   const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
   const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
@@ -51,10 +50,16 @@ function compareDates(date1, date2) {
   return 0;
 }
 
+/**
+ * Проверка: нельзя выбирать дни раньше «сегодня».
+ */
 function isDateSelectable(day, month, year, today) {
   const targetDate = new Date(year, month, day);
-  if (compareDates(targetDate, today) < 0) return false;
-  if (year === 2026 && month === 9 && CLOSED_DAYS_OCT_2026.includes(day)) return false;
+  targetDate.setHours(0, 0, 0, 0);
+  
+  if (compareDates(targetDate, today) < 0) {
+    return false; // День в прошлом — блокируем
+  }
   return true;
 }
 
@@ -86,10 +91,6 @@ function buildCalendarGrid(year, month) {
 }
 
 function getSlotsForDate(year, month, day) {
-  if (year === 2026 && month === 9 && day === 17) {
-    return SLOTS_BY_PATTERN.default.slice();
-  }
-
   const dayOfWeek = new Date(year, month, day).getDay();
   if (dayOfWeek === 0 || dayOfWeek === 6) return SLOTS_BY_PATTERN.weekend.slice();
   if (day % 2 === 0) return SLOTS_BY_PATTERN.evenDay.slice();
@@ -109,7 +110,6 @@ function formatPrice(price) {
   return price.toLocaleString("ru-RU") + " ₽";
 }
 
-// 4. Рендер и обработчики
 function renderCalendar() {
   const monthTitleEl = document.getElementById("calendarMonthTitle");
   const legendMonthEl = document.getElementById("legendMonthLabel");
@@ -232,7 +232,7 @@ function onDayClick(event) {
   BOOKING_STATE.selectedDay = day;
   BOOKING_STATE.selectedMonth = BOOKING_STATE.currentMonth;
   BOOKING_STATE.selectedYear = BOOKING_STATE.currentYear;
-  BOOKING_STATE.selectedTime = null;
+  BOOKING_STATE.selectedTime = null; // Обязательный сброс времени при смене дня
 
   BOOKING_STATE.slots = getSlotsForDate(
     BOOKING_STATE.selectedYear,
@@ -297,8 +297,14 @@ function setupMonthNavigation() {
   });
 }
 
-// 5. Инициализация
 function init() {
+  // Проверяем, доступен ли выбранный день (сегодня), если нет — сбрасываем на сегодня
+  if (!isDateSelectable(BOOKING_STATE.selectedDay, BOOKING_STATE.selectedMonth, BOOKING_STATE.selectedYear, TODAY)) {
+    BOOKING_STATE.selectedDay = TODAY.getDate();
+    BOOKING_STATE.selectedMonth = TODAY.getMonth();
+    BOOKING_STATE.selectedYear = TODAY.getFullYear();
+  }
+
   BOOKING_STATE.slots = getSlotsForDate(
     BOOKING_STATE.selectedYear,
     BOOKING_STATE.selectedMonth,
