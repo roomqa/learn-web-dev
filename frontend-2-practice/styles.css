@@ -431,11 +431,11 @@ body {
   box-shadow: 0 4px 12px rgba(49, 84, 66, 0.25);
 }
 
-.time-slot.booked {
+.time-slot.booked,
+.time-slot:disabled {
   background-color: #f0f1ed;
   border-color: #e5e6e1;
   color: #a3a8a4;
-  text-decoration: line-through;
   cursor: not-allowed;
 }
 

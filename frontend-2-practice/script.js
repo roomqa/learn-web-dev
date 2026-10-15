@@ -13,14 +13,43 @@ const DAYS_OF_WEEK = [
   "Среда", "Четверг", "Пятница", "Суббота",
 ];
 
-// Получаем реальное сегодняшнее устройство (без учета часов, минут и секунд)
-const TODAY = new Date();
-TODAY.setHours(0, 0, 0, 0);
+// «Сегодня» — дата для удобства проверки согласно макету (17 октября 2026)
+const TODAY = { day: 17, month: 9, year: 2026 };
 
 const SLOTS_BY_PATTERN = {
-  default: ["10:00", "10:30", "11:00", "12:30", "14:00", "14:30", "15:00", "16:30", "17:00"],
-  evenDay: ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"],
-  weekend: ["11:00", "12:00", "13:30", "15:00", "16:30", "18:00"],
+  default: [
+    { time: "10:00", available: true },
+    { time: "10:30", available: true },
+    { time: "11:00", available: false },
+    { time: "11:30", available: true },
+    { time: "12:30", available: true },
+    { time: "14:00", available: true },
+    { time: "14:30", available: true },
+    { time: "15:00", available: true },
+    { time: "16:30", available: false },
+    { time: "17:00", available: true },
+  ],
+  evenDay: [
+    { time: "10:00", available: true },
+    { time: "11:30", available: true },
+    { time: "13:00", available: false },
+    { time: "14:30", available: true },
+    { time: "16:00", available: true },
+    { time: "17:30", available: true },
+    { time: "19:00", available: true },
+  ],
+  oddDay: [
+    { time: "10:00", available: true },
+    { time: "10:30", available: true },
+    { time: "11:00", available: false },
+    { time: "11:30", available: true },
+    { time: "12:30", available: true },
+    { time: "14:00", available: false },
+    { time: "14:30", available: true },
+    { time: "15:00", available: true },
+    { time: "16:30", available: false },
+    { time: "17:00", available: true },
+  ],
 };
 
 const BOOKING_META = {
@@ -30,20 +59,27 @@ const BOOKING_META = {
   price: 2800,
 };
 
-// Состояние: при старте берем текущий месяц и год, а выбранный день — сегодня (или 17 октября для макета, если текущая дата совпадает)
+// Состояние приложения
 const BOOKING_STATE = {
-  currentYear: TODAY.getFullYear(),
-  currentMonth: TODAY.getMonth(),
-  selectedYear: TODAY.getFullYear(),
-  selectedMonth: TODAY.getMonth(),
-  selectedDay: TODAY.getDate(),
+  currentYear: TODAY.year,
+  currentMonth: TODAY.month,
+  selectedYear: TODAY.year,
+  selectedMonth: TODAY.month,
+  selectedDay: TODAY.day,
   selectedTime: null,
   slots: [],
 };
 
+/**
+ * Сравнение двух дат ({ day, month, year } или Date).
+ */
 function compareDates(date1, date2) {
-  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
-  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+  const d1 = date1 instanceof Date
+    ? new Date(date1.getFullYear(), date1.getMonth(), date1.getDate())
+    : new Date(date1.year, date1.month, date1.day);
+  const d2 = date2 instanceof Date
+    ? new Date(date2.getFullYear(), date2.getMonth(), date2.getDate())
+    : new Date(date2.year, date2.month, date2.day);
 
   if (d1.getTime() < d2.getTime()) return -1;
   if (d1.getTime() > d2.getTime()) return 1;
@@ -53,16 +89,13 @@ function compareDates(date1, date2) {
 /**
  * Проверка: нельзя выбирать дни раньше «сегодня».
  */
-function isDateSelectable(day, month, year, today) {
-  const targetDate = new Date(year, month, day);
-  targetDate.setHours(0, 0, 0, 0);
-  
-  if (compareDates(targetDate, today) < 0) {
-    return false; // День в прошлом — блокируем
-  }
-  return true;
+function isDateSelectable(day, month, year, today = TODAY) {
+  return compareDates({ day, month, year }, today) >= 0;
 }
 
+/**
+ * Построение сетки календаря для указанного месяца.
+ */
 function buildCalendarGrid(year, month) {
   const firstDayOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -91,10 +124,8 @@ function buildCalendarGrid(year, month) {
 }
 
 function getSlotsForDate(year, month, day) {
-  const dayOfWeek = new Date(year, month, day).getDay();
-  if (dayOfWeek === 0 || dayOfWeek === 6) return SLOTS_BY_PATTERN.weekend.slice();
   if (day % 2 === 0) return SLOTS_BY_PATTERN.evenDay.slice();
-  return SLOTS_BY_PATTERN.default.slice();
+  return SLOTS_BY_PATTERN.oddDay.slice();
 }
 
 function formatSlotsCount(count) {
@@ -178,14 +209,22 @@ function renderTimeSlots() {
   countBadgeEl.textContent = formatSlotsCount(BOOKING_STATE.slots.length);
 
   let html = "";
-  BOOKING_STATE.slots.forEach(function (timeStr) {
-    const activeClass = BOOKING_STATE.selectedTime === timeStr ? "selected" : "";
-    html += `<button type="button" class="time-slot ${activeClass}" data-time="${timeStr}">${timeStr}</button>`;
+  BOOKING_STATE.slots.forEach(function (slot) {
+    const timeStr = typeof slot === "string" ? slot : slot.time;
+    const isAvailable = typeof slot === "string" ? true : slot.available;
+    const isSelected = BOOKING_STATE.selectedTime === timeStr;
+
+    if (!isAvailable) {
+      html += `<button type="button" class="time-slot booked" disabled data-time="${timeStr}">${timeStr}</button>`;
+    } else {
+      const activeClass = isSelected ? "selected" : "";
+      html += `<button type="button" class="time-slot ${activeClass}" data-time="${timeStr}">${timeStr}</button>`;
+    }
   });
 
   slotsGridEl.innerHTML = html;
 
-  const slotButtons = slotsGridEl.querySelectorAll(".time-slot");
+  const slotButtons = slotsGridEl.querySelectorAll(".time-slot:not(.booked):not(:disabled)");
   slotButtons.forEach(function (btn) {
     btn.addEventListener("click", onTimeSlotClick);
   });
@@ -207,13 +246,14 @@ function updateBottomBar() {
 
   summaryMasterEl.textContent = `${BOOKING_META.masterName} · ${formatPrice(BOOKING_META.price)}`;
 
+  const timePart = BOOKING_STATE.selectedTime || "время не выбрано";
+  bottomBarNoteEl.textContent = `${dayOfWeekName}, ${BOOKING_STATE.selectedDay} ${monthGenitive} ${BOOKING_STATE.selectedYear} • ${timePart}`;
+
   if (BOOKING_STATE.selectedTime) {
     summaryDateTimeEl.textContent = `${BOOKING_STATE.selectedDay} ${monthGenitive} · ${BOOKING_STATE.selectedTime}`;
-    bottomBarNoteEl.textContent = `${dayOfWeekName}, ${BOOKING_STATE.selectedDay} ${monthGenitive} ${BOOKING_STATE.selectedYear} • ${BOOKING_STATE.selectedTime} (МСК)`;
     continueBtn.disabled = false;
   } else {
     summaryDateTimeEl.textContent = `${BOOKING_STATE.selectedDay} ${monthGenitive} · выберите время`;
-    bottomBarNoteEl.textContent = "Выберите удобный слот времени, чтобы продолжить";
     continueBtn.disabled = true;
   }
 }
@@ -298,11 +338,10 @@ function setupMonthNavigation() {
 }
 
 function init() {
-  // Проверяем, доступен ли выбранный день (сегодня), если нет — сбрасываем на сегодня
   if (!isDateSelectable(BOOKING_STATE.selectedDay, BOOKING_STATE.selectedMonth, BOOKING_STATE.selectedYear, TODAY)) {
-    BOOKING_STATE.selectedDay = TODAY.getDate();
-    BOOKING_STATE.selectedMonth = TODAY.getMonth();
-    BOOKING_STATE.selectedYear = TODAY.getFullYear();
+    BOOKING_STATE.selectedDay = TODAY.day;
+    BOOKING_STATE.selectedMonth = TODAY.month;
+    BOOKING_STATE.selectedYear = TODAY.year;
   }
 
   BOOKING_STATE.slots = getSlotsForDate(

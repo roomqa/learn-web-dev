@@ -417,7 +417,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.time-slot:hover {
+.time-slot:hover:not(:disabled):not(.booked) {
   border-color: #315442;
   background-color: #f2f7f4;
   box-shadow: 0 2px 6px rgba(49, 84, 66, 0.1);
@@ -434,6 +434,14 @@ body {
   color: #ffffff;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(49, 84, 66, 0.25);
+}
+
+.time-slot.booked,
+.time-slot:disabled {
+  background-color: #f0f1ed;
+  border-color: #e5e6e1;
+  color: #a3a8a4;
+  cursor: not-allowed;
 }
 
 .selection-summary {
@@ -487,9 +495,15 @@ body {
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.continue-btn:hover {
+.continue-btn:hover:not(:disabled) {
   background-color: #264234;
   box-shadow: 0 4px 14px rgba(49, 84, 66, 0.3);
+}
+
+.continue-btn:disabled {
+  background-color: #a7b5ad;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* ==================== ПОДВАЛ ==================== */
