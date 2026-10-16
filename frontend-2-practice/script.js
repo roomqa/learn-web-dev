@@ -13,8 +13,13 @@ const DAYS_OF_WEEK = [
   "Среда", "Четверг", "Пятница", "Суббота",
 ];
 
-// «Сегодня» — дата для удобства проверки согласно макету (17 октября 2026)
-const TODAY = { day: 17, month: 9, year: 2026 };
+// Актуальная дата «сегодня» на основе new Date()
+const _now = new Date();
+const TODAY = {
+  day: _now.getDate(),
+  month: _now.getMonth(),
+  year: _now.getFullYear(),
+};
 
 const SLOTS_BY_PATTERN = {
   default: [
@@ -124,6 +129,7 @@ function buildCalendarGrid(year, month) {
 }
 
 function getSlotsForDate(year, month, day) {
+  if (!day) return [];
   if (day % 2 === 0) return SLOTS_BY_PATTERN.evenDay.slice();
   return SLOTS_BY_PATTERN.oddDay.slice();
 }
@@ -150,7 +156,15 @@ function renderCalendar() {
   const monthLabel = `${MONTHS_NOMINATIVE[BOOKING_STATE.currentMonth]} ${BOOKING_STATE.currentYear}`;
   monthTitleEl.textContent = monthLabel;
   legendMonthEl.textContent = monthLabel;
-  legendSelectedDayEl.textContent = BOOKING_STATE.selectedDay || "—";
+
+  const isSelectedInCurrentMonth =
+    BOOKING_STATE.selectedMonth === BOOKING_STATE.currentMonth &&
+    BOOKING_STATE.selectedYear === BOOKING_STATE.currentYear;
+
+  legendSelectedDayEl.textContent =
+    isSelectedInCurrentMonth && BOOKING_STATE.selectedDay
+      ? BOOKING_STATE.selectedDay
+      : "—";
 
   const weeks = buildCalendarGrid(BOOKING_STATE.currentYear, BOOKING_STATE.currentMonth);
   let html = "";
@@ -197,6 +211,14 @@ function renderTimeSlots() {
   const countBadgeEl = document.getElementById("slotsCountBadge");
   const slotsGridEl = document.getElementById("timeSlotsGrid");
 
+  if (!BOOKING_STATE.selectedDay) {
+    dateHeadingEl.textContent = `${MONTHS_NOMINATIVE[BOOKING_STATE.currentMonth]} ${BOOKING_STATE.currentYear}`;
+    countBadgeEl.textContent = "0 слотов";
+    slotsGridEl.innerHTML =
+      '<div style="grid-column: 1 / -1; text-align: center; color: #787d78; padding: 24px;">Нет доступных слотов на выбранный месяц</div>';
+    return;
+  }
+
   const selectedDateObj = new Date(
     BOOKING_STATE.selectedYear,
     BOOKING_STATE.selectedMonth,
@@ -206,7 +228,12 @@ function renderTimeSlots() {
   const monthGenitive = MONTHS_GENITIVE[BOOKING_STATE.selectedMonth];
 
   dateHeadingEl.textContent = `${dayOfWeekName}, ${BOOKING_STATE.selectedDay} ${monthGenitive}`;
-  countBadgeEl.textContent = formatSlotsCount(BOOKING_STATE.slots.length);
+
+  // Подсчитываем только действительно свободные слоты (available: true)
+  const availableSlotsCount = BOOKING_STATE.slots.filter(function (slot) {
+    return typeof slot === "string" ? true : slot.available;
+  }).length;
+  countBadgeEl.textContent = formatSlotsCount(availableSlotsCount);
 
   let html = "";
   BOOKING_STATE.slots.forEach(function (slot) {
@@ -236,6 +263,15 @@ function updateBottomBar() {
   const bottomBarNoteEl = document.getElementById("bottomBarNote");
   const continueBtn = document.getElementById("continueBtn");
 
+  summaryMasterEl.textContent = `${BOOKING_META.masterName} · ${formatPrice(BOOKING_META.price)}`;
+
+  if (!BOOKING_STATE.selectedDay) {
+    summaryDateTimeEl.textContent = "дата не выбрана";
+    bottomBarNoteEl.textContent = "Выберите доступную дату в календаре";
+    continueBtn.disabled = true;
+    return;
+  }
+
   const selectedDateObj = new Date(
     BOOKING_STATE.selectedYear,
     BOOKING_STATE.selectedMonth,
@@ -243,8 +279,6 @@ function updateBottomBar() {
   );
   const dayOfWeekName = DAYS_OF_WEEK[selectedDateObj.getDay()];
   const monthGenitive = MONTHS_GENITIVE[BOOKING_STATE.selectedMonth];
-
-  summaryMasterEl.textContent = `${BOOKING_META.masterName} · ${formatPrice(BOOKING_META.price)}`;
 
   const timePart = BOOKING_STATE.selectedTime || "время не выбрано";
   bottomBarNoteEl.textContent = `${dayOfWeekName}, ${BOOKING_STATE.selectedDay} ${monthGenitive} ${BOOKING_STATE.selectedYear} • ${timePart}`;
@@ -296,22 +330,59 @@ function setupMonthNavigation() {
   const nextBtn = document.getElementById("nextMonthBtn");
   const continueBtn = document.getElementById("continueBtn");
 
-  prevBtn.addEventListener("click", function () {
-    BOOKING_STATE.currentMonth -= 1;
+  function changeMonth(delta) {
+    BOOKING_STATE.currentMonth += delta;
     if (BOOKING_STATE.currentMonth < 0) {
       BOOKING_STATE.currentMonth = 11;
       BOOKING_STATE.currentYear -= 1;
-    }
-    renderCalendar();
-  });
-
-  nextBtn.addEventListener("click", function () {
-    BOOKING_STATE.currentMonth += 1;
-    if (BOOKING_STATE.currentMonth > 11) {
+    } else if (BOOKING_STATE.currentMonth > 11) {
       BOOKING_STATE.currentMonth = 0;
       BOOKING_STATE.currentYear += 1;
     }
+
+    // Синхронизируем выбранную дату с новым отображаемым месяцем
+    BOOKING_STATE.selectedMonth = BOOKING_STATE.currentMonth;
+    BOOKING_STATE.selectedYear = BOOKING_STATE.currentYear;
+    BOOKING_STATE.selectedTime = null; // Сброс времени при переходе к другому месяцу
+
+    const isCurrentMonth =
+      BOOKING_STATE.currentYear === TODAY.year &&
+      BOOKING_STATE.currentMonth === TODAY.month;
+    const isFutureMonth =
+      compareDates(
+        { day: 1, month: BOOKING_STATE.currentMonth, year: BOOKING_STATE.currentYear },
+        TODAY
+      ) > 0;
+
+    if (isCurrentMonth) {
+      BOOKING_STATE.selectedDay = TODAY.day;
+    } else if (isFutureMonth) {
+      BOOKING_STATE.selectedDay = 1;
+    } else {
+      BOOKING_STATE.selectedDay = null;
+    }
+
+    if (BOOKING_STATE.selectedDay !== null) {
+      BOOKING_STATE.slots = getSlotsForDate(
+        BOOKING_STATE.selectedYear,
+        BOOKING_STATE.selectedMonth,
+        BOOKING_STATE.selectedDay
+      );
+    } else {
+      BOOKING_STATE.slots = [];
+    }
+
     renderCalendar();
+    renderTimeSlots();
+    updateBottomBar();
+  }
+
+  prevBtn.addEventListener("click", function () {
+    changeMonth(-1);
+  });
+
+  nextBtn.addEventListener("click", function () {
+    changeMonth(1);
   });
 
   continueBtn.addEventListener("click", function () {

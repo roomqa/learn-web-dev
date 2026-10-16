@@ -8,6 +8,7 @@ import { fetchToday, fetchSlots } from "./api";
 import {
   MONTHS_GENITIVE,
   DAYS_OF_WEEK,
+  compareDates,
   isDateSelectable,
 } from "./data/date";
 
@@ -40,6 +41,8 @@ export default function App() {
   // Шаг 1. Загрузка «сегодня» при открытии страницы
   useEffect(() => {
     let isMounted = true;
+    setIsTodayLoading(true);
+    setTodayError(null);
 
     fetchToday()
       .then((data) => {
@@ -50,7 +53,6 @@ export default function App() {
         setSelectedYear(data.year);
         setSelectedMonth(data.month);
         setSelectedDay(data.day);
-        setIsSlotsLoading(true);
         setIsTodayLoading(false);
       })
       .catch((err) => {
@@ -64,13 +66,19 @@ export default function App() {
     };
   }, []);
 
-  // Шаг 2. Загрузка слотов при смене дня (или при первой загрузке today)
+  // Шаг 2. Загрузка слотов при смене дня/месяца (сброс ошибки и включение загрузки внутри useEffect)
   useEffect(() => {
-    if (selectedDay === null || selectedMonth === null || selectedYear === null) {
+    if (!selectedDay || selectedMonth === null || selectedYear === null) {
+      setSlotsData([]);
+      setIsSlotsLoading(false);
+      setSlotsError(null);
       return;
     }
 
     let isMounted = true;
+    // Сбрасываем ошибку и включаем загрузку перед новым запросом непосредственно внутри useEffect
+    setIsSlotsLoading(true);
+    setSlotsError(null);
 
     const targetDate = {
       day: selectedDay,
@@ -104,22 +112,47 @@ export default function App() {
     };
   }, [selectedDay, selectedMonth, selectedYear]);
 
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear((prev) => prev - 1);
-    } else {
-      setCurrentMonth((prev) => prev - 1);
+  // Синхронизация выбранной даты и времени с отображаемым месяцем
+  const syncMonth = (nextMonth, nextYear) => {
+    setCurrentMonth(nextMonth);
+    setCurrentYear(nextYear);
+    setSelectedMonth(nextMonth);
+    setSelectedYear(nextYear);
+    setSelectedTime(null); // Сброс времени при смене месяца
+
+    const isCurrentMonth = today && nextYear === today.year && nextMonth === today.month;
+    const isFutureMonth =
+      today &&
+      compareDates({ day: 1, month: nextMonth, year: nextYear }, today) > 0;
+
+    let nextDay = null;
+    if (isCurrentMonth) {
+      nextDay = today.day;
+    } else if (isFutureMonth) {
+      nextDay = 1;
     }
+
+    setSelectedDay(nextDay);
+  };
+
+  const handlePrevMonth = () => {
+    let nextMonth = currentMonth - 1;
+    let nextYear = currentYear;
+    if (nextMonth < 0) {
+      nextMonth = 11;
+      nextYear -= 1;
+    }
+    syncMonth(nextMonth, nextYear);
   };
 
   const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear((prev) => prev + 1);
-    } else {
-      setCurrentMonth((prev) => prev + 1);
+    let nextMonth = currentMonth + 1;
+    let nextYear = currentYear;
+    if (nextMonth > 11) {
+      nextMonth = 0;
+      nextYear += 1;
     }
+    syncMonth(nextMonth, nextYear);
   };
 
   const handleDayClick = (day) => {
@@ -132,8 +165,6 @@ export default function App() {
     setSelectedMonth(currentMonth);
     setSelectedDay(day);
     setSelectedTime(null); // Обязательный сброс времени при смене дня
-    setIsSlotsLoading(true);
-    setSlotsError(null);
   };
 
   const handleSlotClick = (timeStr) => {
@@ -186,8 +217,12 @@ export default function App() {
     );
   }
 
-  const selectedDateObj = new Date(selectedYear, selectedMonth, selectedDay);
-  const dayOfWeekName = DAYS_OF_WEEK[selectedDateObj.getDay()];
+  const selectedDateObj = selectedDay
+    ? new Date(selectedYear, selectedMonth, selectedDay)
+    : null;
+  const dayOfWeekName = selectedDateObj
+    ? DAYS_OF_WEEK[selectedDateObj.getDay()]
+    : "";
   const monthGenitive = MONTHS_GENITIVE[selectedMonth];
 
   return (

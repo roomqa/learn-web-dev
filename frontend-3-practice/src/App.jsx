@@ -8,6 +8,7 @@ import {
   MONTHS_GENITIVE,
   DAYS_OF_WEEK,
   TODAY,
+  compareDates,
   isDateSelectable,
   getSlotsForDate,
 } from "./data/date";
@@ -31,22 +32,51 @@ export default function App() {
     price: 2800,
   };
 
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear((prev) => prev - 1);
+  // Синхронизация выбранной даты и времени с отображаемым месяцем (пункт 4 замечаний)
+  const syncMonth = (nextMonth, nextYear) => {
+    setCurrentMonth(nextMonth);
+    setCurrentYear(nextYear);
+    setSelectedMonth(nextMonth);
+    setSelectedYear(nextYear);
+    setSelectedTime(null); // Сброс времени при переходе к новому месяцу
+
+    const isCurrentMonth = nextYear === TODAY.year && nextMonth === TODAY.month;
+    const isFutureMonth =
+      compareDates({ day: 1, month: nextMonth, year: nextYear }, TODAY) > 0;
+
+    let nextDay = null;
+    if (isCurrentMonth) {
+      nextDay = TODAY.day;
+    } else if (isFutureMonth) {
+      nextDay = 1;
+    }
+
+    setSelectedDay(nextDay);
+    if (nextDay) {
+      setSlots(getSlotsForDate(nextYear, nextMonth, nextDay));
     } else {
-      setCurrentMonth((prev) => prev - 1);
+      setSlots([]);
     }
   };
 
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear((prev) => prev + 1);
-    } else {
-      setCurrentMonth((prev) => prev + 1);
+  const handlePrevMonth = () => {
+    let nextMonth = currentMonth - 1;
+    let nextYear = currentYear;
+    if (nextMonth < 0) {
+      nextMonth = 11;
+      nextYear -= 1;
     }
+    syncMonth(nextMonth, nextYear);
+  };
+
+  const handleNextMonth = () => {
+    let nextMonth = currentMonth + 1;
+    let nextYear = currentYear;
+    if (nextMonth > 11) {
+      nextMonth = 0;
+      nextYear += 1;
+    }
+    syncMonth(nextMonth, nextYear);
   };
 
   const handleDayClick = (day) => {
@@ -86,8 +116,12 @@ export default function App() {
     );
   };
 
-  const selectedDateObj = new Date(selectedYear, selectedMonth, selectedDay);
-  const dayOfWeekName = DAYS_OF_WEEK[selectedDateObj.getDay()];
+  const selectedDateObj = selectedDay
+    ? new Date(selectedYear, selectedMonth, selectedDay)
+    : null;
+  const dayOfWeekName = selectedDateObj
+    ? DAYS_OF_WEEK[selectedDateObj.getDay()]
+    : "";
   const monthGenitive = MONTHS_GENITIVE[selectedMonth];
 
   return (
