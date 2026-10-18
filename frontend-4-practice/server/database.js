@@ -5,8 +5,15 @@
 //   - slotsEvenDay / slotsOddDay — два набора слотов,
 //     чтобы на клиенте было видно: при смене дня данные разные.
 export const database = {
-  // «Сегодня» по мнению сервера.
-  today: { day: 17, month: 9, year: 2026 },
+  // «Сегодня» по мнению сервера (вычисляется динамически на основе текущей даты).
+  get today() {
+    const now = new Date();
+    return {
+      day: now.getDate(),
+      month: now.getMonth(),
+      year: now.getFullYear(),
+    };
+  },
 
   // Слоты для чётных дней (2, 4, 6, ...)
   slotsEvenDay: [

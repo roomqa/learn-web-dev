@@ -18,13 +18,13 @@ export default function App() {
   const [isTodayLoading, setIsTodayLoading] = useState(true);
   const [todayError, setTodayError] = useState(null);
 
-  // 2. Состояние календаря (отображаемый месяц и год)
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(9); // 9 = Октябрь
+  // 2. Состояние календаря (отображаемый месяц и год, инициализируются из today сервера)
+  const [currentYear, setCurrentYear] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(null);
 
   // 3. Состояние выбранной даты и времени
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedMonth, setSelectedMonth] = useState(9);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
 
